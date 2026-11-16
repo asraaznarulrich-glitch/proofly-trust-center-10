@@ -28,3 +28,9 @@ use the editor.
   own key and store it in Secrets.
 - **Secrets.** Lovable manages them. Do not put secret values in the repo.
 <!-- LOVABLE:END -->
+
+## Application boundaries
+- Preserve imported page markup and the existing design tokens; security repairs must not redesign the interface.
+- URL syntax/IP validation is shared by the form and server; DNS checks, manual redirects and bounded fetches live in a server-only scanner to keep network analysis out of browser bundles.
+- Private analyses, policies and publishing metadata use owner-scoped RLS and composite owner foreign keys; a trigger projects an allowlist into a public-only table so public readers never receive owner identities.
+- Protected content lives under the authenticated pathless layout and all private operations use authenticated server functions; browser-only fake accounts and demonstration records are not data sources.
