@@ -4,7 +4,7 @@ import { Logo, ProoflyBadge } from "@/components/SiteHeader";
 import { getScanBySlug, formatDate, DISCLAIMER } from "@/lib/proofly/mock";
 
 export const Route = createFileRoute("/p/$slug")({
-  loader: ({ params }) => { const s = getScanBySlug(params.slug); if (!s) throw notFound(); return s; },
+  loader: async ({ params }) => { const s = await getScanBySlug(params.slug); if (!s) throw notFound(); return s; },
   head: ({ loaderData }) => ({ meta: [
     { title: `${loaderData?.appName ?? "Page"} — Page de confiance Proofly` },
     { name: "description", content: `Résumé de l'analyse publique de ${loaderData?.appName ?? "cette app"}.` },

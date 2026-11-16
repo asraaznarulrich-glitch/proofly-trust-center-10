@@ -3,10 +3,14 @@ import { FileText, Globe, Code2 } from "lucide-react";
 import { SiteHeader } from "@/components/SiteHeader";
 import { FindingSection } from "@/components/FindingList";
 import { Button } from "@/components/ui/button";
+import { useServerFn } from "@tanstack/react-start";
+import { useNavigate } from "@tanstack/react-router";
+import { toast } from "sonner";
+import { publishTrustPage } from "@/lib/proofly/api.functions";
 import { getScan, formatDate } from "@/lib/proofly/mock";
 
 export const Route = createFileRoute("/_authenticated/report/$id")({
-  loader: ({ params }) => { const s = getScan(params.id); if (!s) throw notFound(); return s; },
+  loader: async ({ params }) => { const s = await getScan(params.id); if (!s) throw notFound(); return s; },
   head: ({ loaderData }) => ({ meta: [
     { title: `Rapport ${loaderData?.appName ?? ""} — Proofly` }, { name: "description", content: "Résultat de l'analyse Proofly." },
     { property: "og:title", content: "Rapport d'analyse — Proofly" }, { property: "og:description", content: "Résultat de l'analyse Proofly." },
@@ -17,13 +21,18 @@ export const Route = createFileRoute("/_authenticated/report/$id")({
 
 function Report() {
   const s = Route.useLoaderData();
+  const publish = useServerFn(publishTrustPage); const navigate = useNavigate();
+  const publishPage = async () => {
+    try { const { slug } = await publish({ data: { scanId: s.id, appName: s.appName } }); await navigate({ to: "/p/$slug", params: { slug } }); }
+    catch { toast.error("Impossible de publier la page."); }
+  };
   return (
     <div className="min-h-screen"><SiteHeader />
       <main className="mx-auto max-w-3xl space-y-10 px-5 py-12">
         <div><p className="text-sm text-muted-foreground">Analysé le {formatDate(s.date)}</p><h1 className="font-display text-4xl">{s.appName}</h1><p className="text-muted-foreground">{s.url}</p></div>
         <div className="grid gap-3 sm:grid-cols-3">
           <Button asChild size="lg" className="h-12"><Link to="/policy/$id" params={{ id: s.id }}><FileText className="h-4 w-4" />Générer ma politique de confidentialité</Link></Button>
-          <Button asChild size="lg" variant="outline" className="h-12"><Link to="/p/$slug" params={{ slug: s.slug }}><Globe className="h-4 w-4" />Publier ma page de confiance</Link></Button>
+          <Button size="lg" variant="outline" className="h-12" onClick={publishPage}><Globe className="h-4 w-4" />Publier ma page de confiance</Button>
           <Button asChild size="lg" variant="ghost" className="h-12"><Link to="/badge/$id" params={{ id: s.id }}><Code2 className="h-4 w-4" />Code du badge</Link></Button>
         </div>
         <FindingSection title="Services tiers détectés" items={s.thirdParty} />

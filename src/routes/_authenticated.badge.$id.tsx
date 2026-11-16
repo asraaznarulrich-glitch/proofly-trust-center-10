@@ -1,4 +1,5 @@
 import { createFileRoute, notFound } from "@tanstack/react-router";
+import { useHydrated } from "@tanstack/react-router";
 import { Copy } from "lucide-react";
 import { toast } from "sonner";
 import { SiteHeader, ProoflyBadge } from "@/components/SiteHeader";
@@ -6,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { getScan } from "@/lib/proofly/mock";
 
 export const Route = createFileRoute("/_authenticated/badge/$id")({
-  loader: ({ params }) => { const s = getScan(params.id); if (!s) throw notFound(); return s; },
+  loader: async ({ params }) => { const s = await getScan(params.id); if (!s) throw notFound(); return s; },
   head: () => ({ meta: [
     { title: "Badge Proofly — intégration" }, { name: "description", content: "Ajoutez le badge Proofly à votre site." },
     { property: "og:title", content: "Badge Proofly" }, { property: "og:description", content: "Ajoutez le badge Proofly à votre site." },
@@ -17,7 +18,8 @@ export const Route = createFileRoute("/_authenticated/badge/$id")({
 
 function BadgePage() {
   const s = Route.useLoaderData();
-  const url = `https://proofly.app/p/${s.slug}`;
+  const hydrated = useHydrated();
+  const url = hydrated && s.slug ? `${window.location.origin}/p/${s.slug}` : "";
   const snippet = `<a href="${url}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border:1px solid #dfe3ea;border-radius:999px;font:600 13px system-ui;color:#1f2a44;text-decoration:none">🛡️ Page de confiance · Proofly</a>`;
   return (
     <div className="min-h-screen"><SiteHeader />

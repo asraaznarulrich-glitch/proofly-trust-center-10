@@ -1,3 +1,5 @@
+import { getScan as readScan, getPublicTrustPage } from "./api.functions";
+import { explainService, explainCookie, explainHeader } from "./catalog";
 export type ScanStatus = "en_cours" | "termine" | "echec";
 export type Level = "ok" | "attention" | "info";
 export interface Finding { name: string; detail: string; explanation: string; level: Level }
@@ -9,28 +11,17 @@ export interface Scan {
 export const statusLabel: Record<ScanStatus, string> = { en_cours: "En cours", termine: "Terminé", echec: "Échec" };
 export const formatDate = (d: string) => new Date(d).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" });
 
-export function policyTemplate(s: Scan) {
-  return `Politique de confidentialité — ${s.appName}
-
-Dernière mise à jour : ${formatDate(s.date)}
-
-1. Responsable du traitement
-Le service ${s.appName} (${s.url}) est édité par [NOM DE L'ENTREPRISE], dont le siège est situé [ADRESSE DE L'ENTREPRISE]. Pour toute question : [E-MAIL DE CONTACT].
-
-2. Données collectées
-Nous collectons l'adresse e-mail et les informations nécessaires à la création de votre compte, ainsi que des données de navigation.
-
-3. Services tiers
-${s.thirdParty.map((t) => `- ${t.name} : ${t.explanation}`).join("\n")}
-
-4. Cookies
-${s.cookies.map((c) => `- ${c.name} (${c.detail}) : ${c.explanation}`).join("\n")}
-
-5. Vos droits
-Vous pouvez accéder à vos données, les corriger ou demander leur suppression en écrivant à [E-MAIL DE CONTACT]. Vous pouvez aussi saisir la CNIL.
-
-6. Durée de conservation
-Vos données sont conservées pendant [DURÉE DE CONSERVATION] après la fermeture de votre compte.`;
-}
-
 export const DISCLAIMER = "Analyse automatique des éléments publics de l'application. Ceci n'est pas une certification de sécurité.";
+
+export async function getScan(id: string): Promise<Scan> {
+  const s = await readScan({ data: { id } });
+  return { id: s.id, slug: s.page?.slug ?? "", appName: s.page?.app_name ?? new URL(s.url).hostname, url: s.url, date: s.created_at, status: s.status === "done" ? "termine" : s.status === "failed" ? "echec" : "en_cours",
+    thirdParty: (s.results?.services ?? []).map(t => ({ name: t.name, detail: t.domains.join(", "), explanation: explainService(t.id), level: "info" })),
+    cookies: (s.results?.cookies ?? []).map(c => ({ name: c.name, detail: c.sameSite ?? "SameSite absent", explanation: explainCookie(c), level: c.secure && c.httpOnly ? "ok" : "attention" })),
+    headers: (s.results?.headers ?? []).map(h => ({ name: h.name, detail: h.present ? "Présent" : "Absent", explanation: explainHeader(h.key), level: h.present ? "ok" : "attention" })) };
+}
+export async function getScanBySlug(slug: string) {
+  const s = await getPublicTrustPage({ data: { slug } });
+  if (!s) return null;
+  return { slug, appName: s.app_name, date: s.last_scan_at, thirdParty: s.summary.services.map(t => ({ name: t.name, explanation: t.category })), cookies: { length: s.summary.cookies.total }, headers: s.summary.headers.map(h => ({ ...h, level: h.present ? "ok" : "attention" })) };
+}

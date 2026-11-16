@@ -1,3 +1,4 @@
+import { z } from "zod";
 import { createServerFn } from "@tanstack/react-start";
 import { createClient } from "@supabase/supabase-js";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
@@ -6,10 +7,10 @@ import { normalizeUrl, URL_ERROR } from "./url-validation";
 import type { ScanResults } from "./catalog";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-const uuidInput = (key: string) => (input: unknown) => {
+const uuidInput = <K extends string>(key: K) => (input: unknown) => {
   const v = (input as Record<string, unknown> | null)?.[key];
   if (typeof v !== "string" || !UUID.test(v)) throw new Error("Identifiant invalide.");
-  return { [key]: v } as Record<string, string>;
+  return { [key]: v } as Record<K, string>;
 };
 
 // ---------- scan-url ----------
@@ -83,7 +84,8 @@ async function callClaude(prompt: string): Promise<string> {
   const stream = await streamMessage({ model: "anthropic/claude-sonnet-5", max_tokens: 8000, messages: [{ role: "user", content: prompt }] });
   let text = "";
   for await (const event of stream) {
-    if (event.type === "content_block_delta" && event.delta.type === "text_delta") text += event.delta.text;
+    const parsed = z.object({ type: z.literal("content_block_delta"), delta: z.object({ type: z.literal("text_delta"), text: z.string() }) }).safeParse(event);
+    if (parsed.success) text += parsed.data.delta.text;
   }
   if (!text.trim()) throw new Error("La génération de la politique a échoué. Réessayez.");
   return text.trim();

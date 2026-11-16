@@ -26,15 +26,23 @@ export async function resolveAndCheck(hostname: string, signal: AbortSignal) {
 
 export async function readCapped(res: Response, signal: AbortSignal): Promise<string> {
   const len = Number(res.headers.get("content-length") || 0);
-  if (len > MAX_BYTES) throw new ScanError().");
+  if (len > MAX_BYTES) { await res.body?.cancel(); throw new ScanError(); }
   if (!res.body) return "";
   const reader = res.body.getReader(); const chunks: Uint8Array[] = []; let total = 0;
   for (;;) {
     signal.throwIfAborted();
-    const { done, value } = await Promise.race([reader.read(), new Promise<never>((_, reject) => { signal.addEventListener("abort", () => { void reader.cancel(); reject(new ScanError()); }, { once: true }); })]);
+    let cancel: (() => void) | undefined;
+    const aborted = new Promise<never>((_, reject) => {
+      cancel = () => { void reader.cancel(); reject(new ScanError()); };
+      signal.addEventListener("abort", cancel, { once: true });
+    });
+    let result: ReadableStreamReadResult<Uint8Array>;
+    try { result = await Promise.race([reader.read(), aborted]); }
+    finally { if (cancel) signal.removeEventListener("abort", cancel); }
+    const { done, value } = result;
     if (done) break;
     total += value.byteLength;
-    if (total > MAX_BYTES) { await reader.cancel(); throw new ScanError()."); }
+    if (total > MAX_BYTES) { await reader.cancel(); throw new ScanError(); }
     chunks.push(value);
   }
   const buf = new Uint8Array(total); let o = 0; for (const c of chunks) { buf.set(c, o); o += c.byteLength; }
@@ -52,12 +60,14 @@ export async function safeGet(start: URL, signal: AbortSignal, accept: string) {
       const loc = res.headers.get("location");
       await res.body?.cancel();
       if (!loc) throw new ScanError();
-      url = normalizeUrl(new URL(loc, url).toString());
+      if (i === MAX_REDIRECTS) throw new ScanError();
+      // Absolute redirect authorities must be checked before URL normalization.
+      url = normalizeUrl(/^https?:\/\//i.test(loc) ? loc : loc.startsWith("//") ? `${url.protocol}${loc}` : new URL(loc, url).toString());
       continue;
     }
     return { res, url };
   }
-  throw new ScanError().");
+  throw new ScanError();
 }
 
 function parseSetCookies(headers: Headers): CookieFinding[] {
@@ -101,9 +111,9 @@ export async function scanUrl(input: URL): Promise<ScanResults> {
   const signal = AbortSignal.timeout(10_000);
   try {
     const { res, url } = await safeGet(input, signal, "text/html,application/xhtml+xml");
-    if (!res.ok) { await res.body?.cancel(); throw new ScanError().`); }
+    if (!res.ok) { await res.body?.cancel(); throw new ScanError(); }
     const ct = res.headers.get("content-type") || "";
-    if (!/html/i.test(ct)) { await res.body?.cancel(); throw new ScanError()."); }
+    if (!/html/i.test(ct)) { await res.body?.cancel(); throw new ScanError(); }
     const html = await readCapped(res, signal);
     const refs = extractRefs(html, url);
     const inline = [...html.matchAll(/<script\b(?![^>]*\bsrc=)[^>]*>([\s\S]*?)<\/script>/gi)].map((m) => (m[1] ?? "").slice(0, 200_000));
@@ -115,6 +125,7 @@ export async function scanUrl(input: URL): Promise<ScanResults> {
     }
     const scriptUrls = scriptTexts.flatMap((t) => [...t.matchAll(/https?:\/\/[a-z0-9.-]+\.[a-z]{2,}[^\s"'`)]*/gi)].map((m) => m[0]).slice(0, 300));
     const services = matchServices([...refs.map((r) => r.url.toString()), ...scriptUrls], [...inline, ...scriptTexts]);
+    signal.throwIfAborted();
     const title = html.match(/<title[^>]*>([^<]{1,200})<\/title>/i)?.[1]?.trim() ?? null;
     return {
       finalUrl: url.toString(), title, scannedAt: new Date().toISOString(), services,
