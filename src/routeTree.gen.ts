@@ -10,33 +10,115 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthRouteImport } from './routes/auth'
+import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated.dashboard'
+import { Route as PSlugRouteImport } from './routes/p.$slug'
+import { Route as AuthenticatedBadgeIdRouteImport } from './routes/_authenticated.badge.$id'
+import { Route as AuthenticatedPolicyIdRouteImport } from './routes/_authenticated.policy.$id'
+import { Route as AuthenticatedReportIdRouteImport } from './routes/_authenticated.report.$id'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthRoute = AuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
+  id: '/_authenticated/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PSlugRoute = PSlugRouteImport.update({
+  id: '/p/$slug',
+  path: '/p/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedBadgeIdRoute = AuthenticatedBadgeIdRouteImport.update({
+  id: '/_authenticated/badge/$id',
+  path: '/badge/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedPolicyIdRoute = AuthenticatedPolicyIdRouteImport.update({
+  id: '/_authenticated/policy/$id',
+  path: '/policy/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedReportIdRoute = AuthenticatedReportIdRouteImport.update({
+  id: '/_authenticated/report/$id',
+  path: '/report/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
+  '/dashboard': typeof AuthenticatedDashboardRoute
+  '/p/$slug': typeof PSlugRoute
+  '/badge/$id': typeof AuthenticatedBadgeIdRoute
+  '/policy/$id': typeof AuthenticatedPolicyIdRoute
+  '/report/$id': typeof AuthenticatedReportIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
+  '/dashboard': typeof AuthenticatedDashboardRoute
+  '/p/$slug': typeof PSlugRoute
+  '/badge/$id': typeof AuthenticatedBadgeIdRoute
+  '/policy/$id': typeof AuthenticatedPolicyIdRoute
+  '/report/$id': typeof AuthenticatedReportIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
+  '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
+  '/p/$slug': typeof PSlugRoute
+  '/_authenticated/badge/$id': typeof AuthenticatedBadgeIdRoute
+  '/_authenticated/policy/$id': typeof AuthenticatedPolicyIdRoute
+  '/_authenticated/report/$id': typeof AuthenticatedReportIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/auth'
+    | '/dashboard'
+    | '/p/$slug'
+    | '/badge/$id'
+    | '/policy/$id'
+    | '/report/$id'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/auth'
+    | '/dashboard'
+    | '/p/$slug'
+    | '/badge/$id'
+    | '/policy/$id'
+    | '/report/$id'
+  id:
+    | '__root__'
+    | '/'
+    | '/auth'
+    | '/_authenticated/dashboard'
+    | '/p/$slug'
+    | '/_authenticated/badge/$id'
+    | '/_authenticated/policy/$id'
+    | '/_authenticated/report/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AuthRoute: typeof AuthRoute
+  AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
+  PSlugRoute: typeof PSlugRoute
+  AuthenticatedBadgeIdRoute: typeof AuthenticatedBadgeIdRoute
+  AuthenticatedPolicyIdRoute: typeof AuthenticatedPolicyIdRoute
+  AuthenticatedReportIdRoute: typeof AuthenticatedReportIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -48,11 +130,59 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/dashboard': {
+      id: '/_authenticated/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof AuthenticatedDashboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/p/$slug': {
+      id: '/p/$slug'
+      path: '/p/$slug'
+      fullPath: '/p/$slug'
+      preLoaderRoute: typeof PSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/badge/$id': {
+      id: '/_authenticated/badge/$id'
+      path: '/badge/$id'
+      fullPath: '/badge/$id'
+      preLoaderRoute: typeof AuthenticatedBadgeIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/policy/$id': {
+      id: '/_authenticated/policy/$id'
+      path: '/policy/$id'
+      fullPath: '/policy/$id'
+      preLoaderRoute: typeof AuthenticatedPolicyIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/report/$id': {
+      id: '/_authenticated/report/$id'
+      path: '/report/$id'
+      fullPath: '/report/$id'
+      preLoaderRoute: typeof AuthenticatedReportIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AuthRoute: AuthRoute,
+  AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
+  PSlugRoute: PSlugRoute,
+  AuthenticatedBadgeIdRoute: AuthenticatedBadgeIdRoute,
+  AuthenticatedPolicyIdRoute: AuthenticatedPolicyIdRoute,
+  AuthenticatedReportIdRoute: AuthenticatedReportIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
