@@ -1,3 +1,4 @@
+import { normalizeUrl, URL_ERROR } from "@/lib/proofly/url-validation";
 import { useState } from "react";
 import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -12,12 +13,11 @@ export function UrlForm({ onSubmit, label = "Analyser gratuitement", loading = f
       onSubmit={(e) => {
         e.preventDefault();
         try {
-          const u = new URL(url.startsWith("http") ? url : `https://${url}`);
-          if (!u.hostname.includes(".")) throw new Error();
+          const u = normalizeUrl(url);
           setError("");
           onSubmit(u.toString());
         } catch {
-          setError("Cette adresse ne semble pas valide. Exemple : https://monapp.com");
+          setError(URL_ERROR);
         }
       }}
     >

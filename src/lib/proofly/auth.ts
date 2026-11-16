@@ -1,10 +1,12 @@
 import { useEffect, useState } from "react";
-// Temporary mock auth (localStorage) until the real backend is connected.
-const KEY = "proofly-mock-user";
+import { supabase } from "@/integrations/supabase/client";
 export function useMockUser() {
   const [user, setUser] = useState<string | null | undefined>(undefined);
-  useEffect(() => setUser(localStorage.getItem(KEY)), []);
+  useEffect(() => {
+    void supabase.auth.getUser().then(({ data }) => setUser(data.user?.email ?? null));
+    const { data } = supabase.auth.onAuthStateChange((_event, session) => setUser(session?.user.email ?? null));
+    return () => { data.subscription.unsubscribe(); };
+  }, []);
   return user;
 }
-export const mockSignIn = (email: string) => localStorage.setItem(KEY, email);
-export const mockSignOut = () => localStorage.removeItem(KEY);
+export const mockSignOut = () => supabase.auth.signOut();

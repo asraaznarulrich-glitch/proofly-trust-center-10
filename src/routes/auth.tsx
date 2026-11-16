@@ -5,7 +5,7 @@ import { SiteHeader } from "@/components/SiteHeader";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { mockSignIn } from "@/lib/proofly/auth";
+import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/auth")({
   head: () => ({ meta: [
@@ -21,12 +21,17 @@ function AuthPage() {
   const [mode, setMode] = useState<"login" | "signup">("signup");
   const [email, setEmail] = useState(""); const [pw, setPw] = useState("");
   const [error, setError] = useState(""); const [loading, setLoading] = useState(false);
-  const submit = (e: React.FormEvent) => {
+  const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!/^\S+@\S+\.\S+$/.test(email)) return setError("Adresse e-mail invalide.");
     if (pw.length < 8) return setError("Le mot de passe doit contenir au moins 8 caractères.");
     setError(""); setLoading(true);
-    setTimeout(() => { mockSignIn(email); navigate({ to: "/dashboard" }); }, 700);
+    try {
+      const { data, error } = mode === "signup" ? await supabase.auth.signUp({ email, password: pw }) : await supabase.auth.signInWithPassword({ email, password: pw });
+      if (error) { setError("Connexion impossible. Vérifiez vos informations."); return; }
+      if (!data.session) { setError("Consultez votre e-mail pour confirmer votre compte."); return; }
+      await navigate({ to: "/dashboard" });
+    } finally { setLoading(false); }
   };
   return (
     <div className="min-h-screen"><SiteHeader />
