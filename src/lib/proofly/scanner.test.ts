@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { isBlockedIp, normalizeUrl, matchServices } from "./scanner";
+import { isBlockedIp, normalizeUrl } from "./url-validation";
+import { matchServices } from "./scanner.server";
 
 describe("SSRF protection", () => {
   it.each(["127.0.0.1", "10.1.2.3", "172.16.0.1", "192.168.1.1", "169.254.169.254", "100.64.0.1", "0.0.0.0", "::1", "fe80::1", "fd00::1", "::ffff:127.0.0.1"])("blocks %s", (ip) => expect(isBlockedIp(ip)).toBe(true));
