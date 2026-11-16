@@ -14,7 +14,136 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      policies: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          scan_id: string
+          user_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          scan_id: string
+          user_id?: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          scan_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "policies_scan_id_user_id_fkey"
+            columns: ["scan_id", "user_id"]
+            isOneToOne: false
+            referencedRelation: "scans"
+            referencedColumns: ["id", "user_id"]
+          },
+        ]
+      }
+      public_trust_pages: {
+        Row: {
+          app_name: string
+          last_scan_at: string
+          published: boolean
+          slug: string
+          summary: Json
+        }
+        Insert: {
+          app_name: string
+          last_scan_at: string
+          published?: boolean
+          slug: string
+          summary: Json
+        }
+        Update: {
+          app_name?: string
+          last_scan_at?: string
+          published?: boolean
+          slug?: string
+          summary?: Json
+        }
+        Relationships: []
+      }
+      scans: {
+        Row: {
+          created_at: string
+          error: string | null
+          id: string
+          results: Json | null
+          status: string
+          url: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          error?: string | null
+          id?: string
+          results?: Json | null
+          status?: string
+          url: string
+          user_id?: string
+        }
+        Update: {
+          created_at?: string
+          error?: string | null
+          id?: string
+          results?: Json | null
+          status?: string
+          url?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      trust_pages: {
+        Row: {
+          app_name: string
+          created_at: string
+          id: string
+          last_scan_at: string
+          published: boolean
+          scan_id: string
+          slug: string
+          summary: Json
+          user_id: string
+        }
+        Insert: {
+          app_name: string
+          created_at?: string
+          id?: string
+          last_scan_at: string
+          published?: boolean
+          scan_id: string
+          slug: string
+          summary: Json
+          user_id?: string
+        }
+        Update: {
+          app_name?: string
+          created_at?: string
+          id?: string
+          last_scan_at?: string
+          published?: boolean
+          scan_id?: string
+          slug?: string
+          summary?: Json
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "trust_pages_scan_id_user_id_fkey"
+            columns: ["scan_id", "user_id"]
+            isOneToOne: false
+            referencedRelation: "scans"
+            referencedColumns: ["id", "user_id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
